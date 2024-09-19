@@ -4,7 +4,7 @@
 #include <cassert>
 #include <memory>
 #include <iostream>
-#include "node.hpp"
+
 namespace jirkov
 {
   template < typename T >
@@ -23,7 +23,7 @@ namespace jirkov
     void pushFront(const T& data);
     void pushBack(const T& data);
     void popFront();
-    bool empty() noexcept;
+    bool isEmpty() const noexcept;
     void clear();
     void swap(List< T >& otherList) noexcept;
     void assign(size_t n, const T& value);
@@ -43,8 +43,21 @@ namespace jirkov
     ConstIterator cend() const;
 
   private:
-    details::Node<T>* head_;
-    details::Node<T>* tail_;
+    struct Node
+    {
+    public:
+      friend class List;
+      Node(T value) :
+        data(value),
+        next(nullptr)
+      {}
+    private:
+      T data;
+      Node* next;
+    };
+
+    Node* head_;
+    Node* tail_;
   };
 }
 
@@ -55,7 +68,7 @@ public:
   friend class List< T >;
 
   ConstIterator();
-  ConstIterator(jirkov::details::Node<T>* pointer);
+  ConstIterator(Node* pointer);
   ConstIterator(const ConstIterator&) = default;
   ~ConstIterator() = default;
 
@@ -70,16 +83,16 @@ public:
   bool operator==(const ConstIterator& rhs) const;
 
 private:
-  jirkov::details::Node<T>* node;
+  Node* node;
 };
 
 template< typename T >
-jirkov::List< T >::ConstIterator::ConstIterator():
+jirkov::List< T >::ConstIterator::ConstIterator() :
   node(nullptr)
 {}
 
 template< typename T >
-jirkov::List< T >::ConstIterator::ConstIterator(jirkov::details::Node<T>* pointer):
+jirkov::List< T >::ConstIterator::ConstIterator(Node* pointer) :
   node(pointer)
 {}
 
@@ -132,10 +145,10 @@ class jirkov::List< T >::Iterator : public std::iterator< std::forward_iterator_
 public:
   friend class List< T >;
   Iterator();
-  Iterator(const Iterator&) = default;
-  Iterator& operator=(const Iterator&) = default;
   Iterator(ConstIterator someIterator);
   ~Iterator() = default;
+  Iterator(const Iterator&) = default;
+  Iterator& operator=(const Iterator&) = default;
 
   Iterator& operator++();
   Iterator operator++(int);
@@ -151,30 +164,31 @@ private:
 };
 
 template< typename T >
-jirkov::List< T >::Iterator::Iterator():
+jirkov::List< T >::Iterator::Iterator() :
   iterator(nullptr)
 {}
 
 template< typename T >
-jirkov::List< T >::Iterator::Iterator(ConstIterator someIterator):
+jirkov::List< T >::Iterator::Iterator(ConstIterator someIterator) :
   iterator(someIterator)
 {}
 
 template< typename T >
 typename jirkov::List< T >::Iterator& jirkov::List< T >::Iterator::operator++()
 {
-    assert(iterator.node != nullptr);
-    iterator = ConstIterator(iterator.node->next);
-    return *this;
+  assert(iterator != nullptr);
+  iterator++;
+  return *this;
 }
+
 template< typename T >
 typename jirkov::List< T >::Iterator jirkov::List< T >::Iterator::operator++(int)
 {
-    assert(iterator.node != nullptr);
-    Iterator result(*this);
-    iterator = ConstIterator(iterator.node->next);
-    return result;
+  assert(iterator != nullptr);
+  ++iterator;
+  return iterator;
 }
+
 template< typename T >
 T& jirkov::List< T >::Iterator::operator*()
 {
@@ -202,7 +216,7 @@ bool jirkov::List< T >::Iterator::operator==(const Iterator& rhs) const
 }
 
 template< typename T >
-jirkov::List< T >::List():
+jirkov::List< T >::List() :
   head_(nullptr),
   tail_(nullptr)
 {}
@@ -223,7 +237,7 @@ jirkov::List< T >::List(const List< T >& otherList)
 {
   head_ = nullptr;
   tail_ = nullptr;
-  jirkov::details::Node<T>* head = otherList.head_;
+  Node* head = otherList.head_;
   while (head)
   {
     pushBack(head->data);
@@ -249,7 +263,7 @@ jirkov::List< T >::~List()
 template< typename T >
 void jirkov::List< T >::pushFront(const T& data)
 {
-  jirkov::details::Node<T>* node = new jirkov::details::Node<T>(data);
+  Node* node = new Node(data);
   if (head_ != nullptr)
   {
     node->next = head_;
@@ -264,15 +278,7 @@ void jirkov::List< T >::pushFront(const T& data)
 template< typename T >
 void jirkov::List< T >::pushBack(const T& data)
 {
-  jirkov::details::Node<T>* node = nullptr;
-  try
-  {
-    node = new jirkov::details::Node<T>(data);
-  }
-  catch(std::exception& e)
-  {
-    std::cerr << e.what() << "\n";
-  }
+  Node* node = new Node(data);
   if (head_ == nullptr)
   {
     head_ = tail_ = node;
@@ -287,7 +293,7 @@ void jirkov::List< T >::pushBack(const T& data)
 template< typename T >
 size_t jirkov::List< T >::getSize()
 {
-  jirkov::details::Node<T>* head = head_;
+  Node* head = head_;
   size_t size = 0ull;
   while (head)
   {
@@ -308,14 +314,14 @@ void jirkov::List< T >::popFront()
   }
   if (head_ != nullptr)
   {
-    jirkov::details::Node<T>* node = head_;
+    Node* node = head_;
     head_ = node->next;
     delete node;
   }
 }
 
 template< typename T >
-bool jirkov::List< T >::empty() noexcept
+bool jirkov::List< T >::isEmpty() const noexcept
 {
   return head_ == nullptr ? true : false;
 }
@@ -350,9 +356,9 @@ template< typename T >
 void jirkov::List< T >::remove(const T& value)
 {
   ConstIterator iterator = cbegin();
-  jirkov::details::Node<T>* nextNode = iterator.node->next;
-  jirkov::details::Node<T>* toRemove = nullptr;
-  if (!empty())
+  Node* nextNode = iterator.node->next;
+  Node* toRemove = nullptr;
+  if (!isEmpty())
   {
     while (*iterator == value)
     {
@@ -394,9 +400,9 @@ template< typename P >
 void jirkov::List< T >::removeIf(P p)
 {
   ConstIterator iterator = cbegin();
-  jirkov::details::Node<T>* nextNode = iterator.node->next;
-  jirkov::details::Node<T>* toRemove = nullptr;
-  if (!empty())
+  Node* nextNode = iterator.node->next;
+  Node* toRemove = nullptr;
+  if (!isEmpty())
   {
     while (p(*iterator))
     {
@@ -469,7 +475,7 @@ typename jirkov::List< T >::Iterator jirkov::List< T >::begin() const
 template< typename T >
 typename jirkov::List< T >::Iterator jirkov::List< T >::end() const
 {
-  return Iterator(nullptr);
+  return Iterator(tail_->next);
 }
 
 template< typename T >

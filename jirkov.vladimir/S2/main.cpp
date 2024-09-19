@@ -1,56 +1,41 @@
-#include "queue.hpp"
-#include "stack.hpp"
-#include <iostream>
-//#include "function"
+#include <fstream>
+#include "calculationProcess.hpp"
+
 int main(int argc, char* argv[])
 {
   using namespace jirkov;
-  Queue< std::string > someQueue;
-  Stack< long long > someStack;
+  Queue< std::string > expressions;
+  Stack< long long > resultStack;
+
   if (argc == 1)
   {
-    std::string operation;
-    while (!std::cin.eof())
-    {
-      std::getline(std::cin, operation);
-      if (!operation.empty())
-      {
-        someQueue.push(operation);
-      }
-    }
+    readInfixForm(std::cin, expressions);
   }
   else if (argc == 2)
   {
-    std::ifstream std::cin(argv[]);
-    std::string operation;
-    while (!std::cin.eof())
-    {
-      std::getline(std::cin, operation);
-      if (!operation.empty())
-      {
-        someQueue.push(operation);
-      }
-    }
+    std::ifstream input(argv[1]);
+    readInfixForm(input, expressions);
   }
   else
   {
-    std::cerr << "Wrong input" << "\n";
+    std::cerr << "Wrong input\n";
     return 1;
   }
   try
   {
-    while (!someStack.empty())
+    formResultStack(expressions, resultStack);
+    while (!resultStack.isEmpty())
     {
-      std::cout << someStack.front();
-      if (someStack.front() != someStack.back())
+      std::cout << resultStack.front();
+      if (resultStack.front() != resultStack.back())
       {
         std::cout << ' ';
       }
-      someStack.drop();
+      resultStack.drop();
     }
     std::cout << '\n';
   }
-  catch (std::exception & const e)
+  catch (const std::exception &e)
   {
     std::cout << e.what();
     return 1;

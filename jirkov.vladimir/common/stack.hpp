@@ -9,16 +9,16 @@ namespace jirkov
   {
   public:
     Stack() = default;
-    Stack(const Stack < T > & newStack);
-    Stack(Stack < T > && newStack);
+    Stack(const Stack< T >& otherStack);
+    Stack(Stack< T >&& otherStack);
     ~Stack() = default;
 
     void push(const T& data);
     void drop();
     T& front();
     T& back();
-    bool empty() const noexcept;
-    size_t size();
+    size_t getSize() const;
+    bool isEmpty() const noexcept;
 
   private:
     List< T > stack;
@@ -26,15 +26,15 @@ namespace jirkov
 }
 
 template< typename T >
-jirkov::Stack< T >::Stack(const Stack< T >& newStack)
+jirkov::Stack< T >::Stack(const Stack< T >& otherStack)
 {
-  stack(newStack.stack);
+  stack(otherStack.stack);
 }
 
 template< typename T >
-jirkov::Stack< T >::Stack(Stack< T >&& newStack)
+jirkov::Stack< T >::Stack(Stack< T >&& otherStack)
 {
-  stack(std::move(newStack.stack));
+  stack(std::move(otherStack.stack));
 }
 
 template< typename T >
@@ -62,15 +62,15 @@ T& jirkov::Stack< T >::back()
 }
 
 template< typename T >
-bool jirkov::Stack< T >::empty() const noexcept
+size_t jirkov::Stack< T >::getSize() const
 {
-  return stack.empty();
+  return stack.getSize();
 }
 
 template< typename T >
-size_t jirkov::Stack< T >::size()
+bool jirkov::Stack< T >::isEmpty() const noexcept
 {
-  return stack.size();
+  return stack.isEmpty();
 }
 
 #endif
